@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>세이브원 (SaveOne)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root { --brand-grad: linear-gradient(135deg, #FF5E3A 0%, #FF007A 55%, #C80096 100%); }
+    body { font-family: sans-serif; background: #FFFFFF; color: #18181B; margin: 0; -webkit-tap-highlight-color: transparent; }
+    .brand-gradient { background: var(--brand-grad); }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+  <header class="brand-gradient text-white px-5 pt-5 pb-6 rounded-b-[26px] shadow-md">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="icon.svg" alt="세이브원" class="w-10 h-10 rounded-xl shadow border border-white/30" />
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg font-extrabold leading-none">세이브원</h1>
+            <button id="planBadgeBtn" type="button" class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-white text-pink-600 shadow-sm">
+              월 ₩990 광고제거
+            </button>
+          </div>
+          <p class="text-xs text-white/85 mt-1">SaveOne · 오프라인 소셜 미디어 백업</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 px-4 py-5 pb-24 space-y-5 overflow-y-auto">
+    <!-- TAB 1: DOWNLOAD -->
+    <section id="tab-home" class="space-y-4">
+      <div class="bg-white rounded-2xl border border-zinc-200 p-4 shadow-sm space-y-3">
+        <div class="flex items-center justify-between">
+          <label class="text-sm font-bold text-zinc-800">소셜 링크 입력</label>
+          <span id="homePlanChip" class="text-[11px] font-semibold text-zinc-600 bg-zinc-100 px-2 py-0.5 rounded-full">일반무료 / 초고화질 광고</span>
+        </div>
+        <div class="relative">
+          <input id="urlInput" type="url" placeholder="인스타 릴스/스토리, 페이스북, 틱톡 링크..." class="w-full rounded-xl bg-zinc-50 border border-zinc-200 px-3.5 py-3 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-pink-500" />
+          <button id="clearBtn" type="button" class="hidden absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400 px-2 py-1">지우기</button>
+        </div>
+        <div class="flex gap-1.5 flex-wrap">
+          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">Instagram</span>
+          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">Facebook</span>
+          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">TikTok</span>
+          <span class="text-[11px] font-medium px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-600">X</span>
+        </div>
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button id="freeDownloadBtn" type="button" class="py-3 px-2 rounded-xl border border-zinc-200 bg-zinc-50 font-bold text-xs text-zinc-800 flex flex-col items-center">
+            <span>일반화질 무료저장</span>
+            <span class="text-[10px] text-emerald-600 mt-0.5">720p · 광고 없음</span>
+          </button>
+          <button id="ultraDownloadBtn" type="button" class="py-3 px-2 rounded-xl brand-gradient text-white font-bold text-xs shadow flex flex-col items-center">
+            <span>초고화질 다운로드</span>
+            <span id="hdSubLabel" class="text-[10px] text-white/90 mt-0.5">1080p+ · 광고 시청</span>
+          </button>
+        </div>
+        <button id="inspectBtn" type="button" class="w-full py-2 rounded-xl text-xs font-semibold text-zinc-500">
+          화질 선택 · 미리보기 (480p 저용량 / MP3 포함)
+        </button>
+      </div>
+
+      <!-- In-App Video Sniffer Browser Launcher -->
+      <div class="bg-pink-50/70 rounded-2xl border border-pink-100 p-4 flex items-center justify-between gap-3">
+        <div>
+          <p class="text-xs font-extrabold text-zinc-900">웹사이트 영상 자동 감지 브라우저</p>
+          <p class="text-[11px] text-zinc-600 mt-0.5 leading-relaxed">어떤 사이트든 재생되는 영상을 포착해 둥근 저장 버튼이 뜹니다. (또는 삼성인터넷/크롬에서 <b>공유 → 세이브원</b>)</p>
+        </div>
+        <button id="openBrowserBtn" type="button" class="shrink-0 py-2.5 px-3.5 rounded-xl brand-gradient text-white font-bold text-xs shadow-sm">
+          브라우저 열기
+        </button>
+      </div>
+
+      <div id="statusBox" class="hidden rounded-2xl p-3.5 text-sm font-medium"></div>
+
+      <div id="previewCard" class="hidden bg-white rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
+        <img id="previewThumb" src="" class="w-full aspect-video object-cover bg-zinc-900" />
+        <div class="p-4 space-y-3">
+          <h2 id="previewTitle" class="font-bold text-sm text-zinc-900"></h2>
+          <select id="qualitySelect" class="w-full rounded-xl bg-zinc-50 border border-zinc-200 px-3 py-2.5 text-sm font-medium">
+            <option value="720p">일반화질 720p MP4 (무료 · 광고 없음)</option>
+            <option value="low">저용량 480p MP4 (무료 · 광고 없음)</option>
+            <option value="audio">음원만 추출 MP3 (무료 · 광고 없음)</option>
+            <option value="best" id="ultraOption">초고화질 1080p+ MP4 (광고 시청 후 저장)</option>
+          </select>
+          <button id="previewDownloadBtn" type="button" class="w-full py-3 rounded-xl brand-gradient text-white font-bold text-sm">
+            선택한 화질로 저장하기
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: LIBRARY -->
+    <section id="tab-library" class="hidden space-y-3">
+      <h2 class="text-base font-extrabold text-zinc-900">저장된 미디어 보관함</h2>
+      <div id="libraryList" class="space-y-2.5"></div>
+    </section>
+
+    <!-- TAB 3: SETTINGS -->
+    <section id="tab-settings" class="hidden space-y-4">
+      <div class="bg-white rounded-2xl border border-zinc-200 p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-extrabold text-zinc-900">관리자 계정 (광고 면제)</h2>
+          <span id="adminStatusBadge" class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-500">비로그인</span>
+        </div>
+        <div id="adminLoggedOutBox" class="space-y-2">
+          <p id="adminGuideText" class="text-[11px] text-zinc-500 leading-relaxed">
+            최초 1회: 사용하실 관리자 아이디와 비밀번호를 직접 입력해 등록하세요.
+          </p>
+          <input id="adminUserInput" type="text" placeholder="관리자 아이디 (2자 이상)" class="w-full rounded-xl bg-zinc-50 border border-zinc-200 px-3 py-2 text-xs" />
+          <input id="adminPassInput" type="password" placeholder="비밀번호 (4자 이상)" class="w-full rounded-xl bg-zinc-50 border border-zinc-200 px-3 py-2 text-xs" />
+          <button id="adminSubmitBtn" type="button" class="w-full py-2.5 rounded-xl bg-zinc-900 text-white font-bold text-xs">관리자 계정 등록 및 로그인</button>
+        </div>
+        <div id="adminLoggedInBox" class="hidden flex items-center justify-between bg-emerald-50 rounded-xl p-3">
+          <span class="text-xs font-bold text-emerald-800"><span id="adminUserLabel"></span> 관리자 로그인 중</span>
+          <button id="adminLogoutBtn" type="button" class="text-xs font-bold px-2.5 py-1 bg-white rounded-lg border border-emerald-200 text-emerald-700">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-pink-200 p-4 space-y-3">
+        <h2 class="text-sm font-extrabold text-zinc-900">광고 제거 월 구독 (₩990/월)</h2>
+        <p class="text-xs text-zinc-600">매월 990원 구독으로 초고화질 다운로드 시 광고 없이 즉시 저장하세요.</p>
+        <button id="subBtn" type="button" class="w-full py-3 rounded-xl brand-gradient text-white font-bold text-xs">
+          Google Play 월 ₩990 구독 시작
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-zinc-200 p-4 space-y-2.5">
+        <h2 class="text-sm font-extrabold text-zinc-900">추출 엔진 업데이트</h2>
+        <p class="text-xs text-zinc-500">인스타그램·틱톡 등 플랫폼 변경으로 추출이 안 될 때 최신 엔진으로 업데이트합니다.</p>
+        <button id="updateEngineBtn" type="button" class="w-full py-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-zinc-800 font-bold text-xs">
+          최신 추출 엔진으로 업데이트
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-zinc-200 p-4 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-extrabold text-zinc-900">앱 버전 및 업데이트</h2>
+          <span id="appVersionBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-zinc-100 text-zinc-600">v1.0.4</span>
+        </div>
+        <p class="text-xs text-zinc-500">새 기능이 추가되면 파일을 옮길 필요 없이 버튼 한 번으로 바로 업데이트됩니다.</p>
+        <button id="checkAppUpdateBtn" type="button" class="w-full py-2.5 rounded-xl bg-zinc-900 text-white font-bold text-xs">
+          앱 최신 버전 확인
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-zinc-100 grid grid-cols-3 h-16">
+    <button data-tab="home" class="nav-btn text-pink-600 font-bold text-xs">다운로드</button>
+    <button data-tab="library" class="nav-btn text-zinc-400 font-medium text-xs">보관함</button>
+    <button data-tab="settings" class="nav-btn text-zinc-400 font-medium text-xs">설정</button>
+  </nav>
+
+  <!-- Disclaimer Modal -->
+  <div id="disclaimerModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4">
+      <h3 class="text-base font-extrabold">세이브원 (SaveOne) 이용 안내</h3>
+      <p class="text-xs text-zinc-600 leading-relaxed">
+        본 앱은 본인이 소유하거나 허가받은 콘텐츠의 개인 백업용입니다. Google Play 정책에 따라 YouTube 링크는 지원하지 않습니다.
+      </p>
+      <button id="acceptDisclaimerBtn" type="button" class="w-full py-3 rounded-xl brand-gradient text-white font-bold text-sm">
+        확인 및 동의
+      </button>
+    </div>
+  </div>
+
+  <!-- In-App Video / Audio Player Modal -->
+  <div id="playerModal" class="hidden fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl border border-zinc-800">
+      <div class="flex items-center justify-between px-4 py-3 border-b border-zinc-800 text-white">
+        <span id="playerTitle" class="text-xs font-bold truncate pr-4">재생 중</span>
+        <button id="closePlayerBtn" type="button" class="text-zinc-400 hover:text-white text-lg font-bold px-2">✕</button>
+      </div>
+      <div id="playerContainer" class="bg-black flex items-center justify-center max-h-[75vh]"></div>
+    </div>
+  </div>
+
+  <!-- In-App APK Update Modal -->
+  <div id="appUpdateModal" class="hidden fixed inset-0 z-50 bg-black/75 flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-pink-50 text-pink-600">새 업데이트</span>
+        <button id="closeUpdateModalBtn" type="button" class="text-zinc-400 font-bold text-sm">✕</button>
+      </div>
+      <div>
+        <h3 class="text-base font-extrabold text-zinc-900">세이브원 <span id="newVersionTitle"></span> 출시!</h3>
+        <p id="newVersionNotes" class="text-xs text-zinc-600 mt-1 leading-relaxed"></p>
+      </div>
+      <div id="updateProgressWrap" class="hidden space-y-1.5">
+        <div class="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
+          <div id="updateProgressBar" class="h-full brand-gradient transition-all" style="width: 0%"></div>
+        </div>
+        <p id="updateProgressText" class="text-[11px] text-center text-zinc-500">다운로드 준비 중...</p>
+      </div>
+      <button id="startAppUpdateBtn" type="button" class="w-full py-3 rounded-xl brand-gradient text-white font-bold text-sm shadow">
+        지금 바로 업데이트
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const bridge = window.AndroidSaveOne;
+    const urlInput = document.getElementById('urlInput');
+    const clearBtn = document.getElementById('clearBtn');
+    const statusBox = document.getElementById('statusBox');
+    const previewCard = document.getElementById('previewCard');
+    const qualitySelect = document.getElementById('qualitySelect');
+
+    function showStatus(msg, type = 'info') {
+      statusBox.classList.remove('hidden', 'bg-pink-50', 'text-pink-700', 'bg-emerald-50', 'text-emerald-700', 'bg-red-50', 'text-red-700');
+      statusBox.classList.add(type === 'success' ? 'bg-emerald-50' : type === 'error' ? 'bg-red-50' : 'bg-pink-50');
+      statusBox.classList.add(type === 'success' ? 'text-emerald-700' : type === 'error' ? 'text-red-700' : 'text-pink-700');
+      statusBox.textContent = msg;
+    }
+
+    function syncState(state) {
+      const s = typeof state === 'string' ? JSON.parse(state) : state;
+      const planBadgeBtn = document.getElementById('planBadgeBtn');
+      const homePlanChip = document.getElementById('homePlanChip');
+      const hdSubLabel = document.getElementById('hdSubLabel');
+      const ultraOption = document.getElementById('ultraOption');
+
+      if (s.is_admin) {
+        planBadgeBtn.textContent = 'ADMIN · 광고없음';
+        homePlanChip.textContent = '관리자 계정 (광고 면제)';
+        hdSubLabel.textContent = '1080p+ · 광고 면제';
+        ultraOption.textContent = '초고화질 1080p+ MP4 (관리자 무료)';
+      } else if (s.sub_active) {
+        planBadgeBtn.textContent = 'PRO 구독 중';
+        homePlanChip.textContent = '월 ₩990 구독 중';
+        hdSubLabel.textContent = '1080p+ · 광고 없음';
+        ultraOption.textContent = '초고화질 1080p+ MP4 (구독 즉시)';
+      } else {
+        planBadgeBtn.textContent = '월 ₩990 광고제거';
+        homePlanChip.textContent = '일반무료 / 초고화질 광고';
+        hdSubLabel.textContent = '1080p+ · 광고 시청';
+        ultraOption.textContent = '초고화질 1080p+ MP4 (광고 시청 후)';
+      }
+
+      document.getElementById('adminStatusBadge').textContent = s.is_admin ? '로그인됨' : (s.admin_configured ? '비로그인' : '미등록');
+      document.getElementById('adminLoggedOutBox').classList.toggle('hidden', !!s.is_admin);
+      document.getElementById('adminLoggedInBox').classList.toggle('hidden', !s.is_admin);
+      document.getElementById('adminUserLabel').textContent = s.admin_username || '관리자';
+      document.getElementById('adminGuideText').textContent = s.admin_configured
+        ? '등록된 관리자 아이디로 로그인하면 모든 광고가 면제됩니다.'
+        : '최초 1회: 사용하실 관리자 아이디와 비밀번호를 직접 입력해 등록하세요.';
+      document.getElementById('adminSubmitBtn').textContent = s.admin_configured
+        ? '관리자 로그인'
+        : '관리자 계정 등록 및 로그인';
+    }
+
+    window.onStateChanged = syncState;
+    window.onBillingError = (err) => showStatus(err.message, 'error');
+    window.onInspectResult = (res) => {
+      if (res.error) return showStatus(res.error, 'error');
+      document.getElementById('previewThumb').src = res.thumbnail || 'icon.svg';
+      document.getElementById('previewTitle').textContent = res.title;
+      previewCard.classList.remove('hidden');
+    };
+    window.onDownloadStarted = () => showStatus('기기에서 직접 고속 추출 중입니다...', 'info');
+    window.onDownloadStatus = (s) => showStatus(s.message || '처리 중...', 'info');
+    window.onDownloadProgress = (p) => showStatus(`저장 중... ${Math.round(p.progress || 0)}%`, 'info');
+    window.onEngineUpdateResult = (r) => {
+      const btn = document.getElementById('updateEngineBtn');
+      btn.disabled = false;
+      btn.textContent = '최신 추출 엔진으로 업데이트';
+      alert(r.success ? '추출 엔진이 최신 버전으로 업데이트되었습니다!' : '엔진 업데이트에 실패했습니다. 네트워크 연결을 확인해 주세요.');
+    };
+    window.onDownloadResult = (res) => {
+      if (res.error) return showStatus(res.error, 'error');
+      showStatus(`저장 완료! (${res.filename})`, 'success');
+      refreshLibrary();
+    };
+    window.onIncomingUrl = (data) => {
+      if (!data || !data.url) return;
+      urlInput.value = data.url;
+      clearBtn.classList.remove('hidden');
+      showStatus('링크를 가져왔습니다! 원하는 화질을 선택해 저장하세요.', 'info');
+      bridge && bridge.inspectUrl(data.url);
+    };
+
+    function refreshLibrary() {
+      if (!bridge) return;
+      const items = JSON.parse(bridge.getLibrary());
+      const el = document.getElementById('libraryList');
+      if (!items.length) {
+        el.innerHTML = '<div class="text-center py-10 text-xs text-zinc-400">저장된 파일이 없습니다.</div>';
+        return;
+      }
+      el.innerHTML = items.map(i => `
+        <div class="p-3.5 rounded-2xl border border-zinc-200 bg-white shadow-sm space-y-2.5 text-xs">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-bold text-zinc-900 truncate">${i.filename}</span>
+            <span class="text-[11px] text-zinc-400 shrink-0">${(i.size_bytes / 1048576).toFixed(1)} MB</span>
+          </div>
+          <div class="flex gap-2">
+            <button type="button" onclick="openPlayer('${encodeURIComponent(i.path)}', '${i.media_type || 'video'}', '${encodeURIComponent(i.filename)}')" class="flex-1 py-2 rounded-xl brand-gradient text-white font-bold">
+              ▶ 바로 재생
+            </button>
+            <button type="button" onclick="bridge.openMediaExternal('${i.filename.replace(/'/g, "\\'")}')" class="py-2 px-3 rounded-xl bg-zinc-100 text-zinc-700 font-bold">
+              외부열기
+            </button>
+            <button type="button" onclick="bridge.shareMedia('${i.filename.replace(/'/g, "\\'")}')" class="py-2 px-3 rounded-xl bg-pink-50 text-pink-600 font-bold">
+              공유
+            </button>
+            <button type="button" onclick="deleteLibraryFile('${i.filename.replace(/'/g, "\\'")}')" class="py-2 px-2.5 rounded-xl bg-zinc-100 text-zinc-500 font-bold">
+              삭제
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.openPlayer = (encodedPath, mediaType, encodedName) => {
+      const fileUrl = 'file://' + decodeURIComponent(encodedPath);
+      const container = document.getElementById('playerContainer');
+      document.getElementById('playerTitle').textContent = decodeURIComponent(encodedName);
+      if (mediaType === 'audio') {
+        container.innerHTML = `<audio controls autoplay class="w-full m-4"><source src="${fileUrl}"></audio>`;
+      } else if (mediaType === 'image') {
+        container.innerHTML = `<img src="${fileUrl}" class="w-full max-h-[75vh] object-contain" />`;
+      } else {
+        container.innerHTML = `<video controls autoplay playsinline class="w-full max-h-[75vh]"><source src="${fileUrl}" type="video/mp4"></video>`;
+      }
+      document.getElementById('playerModal').classList.remove('hidden');
+    };
+
+    document.getElementById('closePlayerBtn').addEventListener('click', () => {
+      document.getElementById('playerContainer').innerHTML = '';
+      document.getElementById('playerModal').classList.add('hidden');
+    });
+
+    window.deleteLibraryFile = (filename) => {
+      if (!confirm('이 파일을 삭제할까요?')) return;
+      if (bridge && bridge.deleteMedia(filename)) {
+        refreshLibrary();
+      }
+    };
+
+    urlInput.addEventListener('input', () => clearBtn.classList.toggle('hidden', !urlInput.value.trim()));
+    clearBtn.addEventListener('click', () => { urlInput.value = ''; clearBtn.classList.add('hidden'); previewCard.classList.add('hidden'); });
+    document.getElementById('inspectBtn').addEventListener('click', () => bridge && bridge.inspectUrl(urlInput.value.trim()));
+    document.getElementById('openBrowserBtn').addEventListener('click', () => bridge && bridge.openBrowser(urlInput.value.trim()));
+    document.getElementById('freeDownloadBtn').addEventListener('click', () => bridge && bridge.downloadWithPolicy(urlInput.value.trim(), '720p'));
+    document.getElementById('ultraDownloadBtn').addEventListener('click', () => bridge && bridge.downloadWithPolicy(urlInput.value.trim(), 'best'));
+    document.getElementById('previewDownloadBtn').addEventListener('click', () => bridge && bridge.downloadWithPolicy(urlInput.value.trim(), qualitySelect.value));
+    document.getElementById('subBtn').addEventListener('click', () => bridge && bridge.launchMonthlySubscription());
+    document.getElementById('planBadgeBtn').addEventListener('click', () => bridge && bridge.launchMonthlySubscription());
+
+    document.getElementById('adminSubmitBtn').addEventListener('click', () => {
+      const r = JSON.parse(bridge.setupOrLoginAdmin(document.getElementById('adminUserInput').value, document.getElementById('adminPassInput').value));
+      if (!r.success) return alert(r.message);
+      syncState(bridge.getState());
+    });
+    document.getElementById('adminLogoutBtn').addEventListener('click', () => syncState(bridge.logoutAdmin()));
+    document.getElementById('updateEngineBtn').addEventListener('click', () => {
+      const btn = document.getElementById('updateEngineBtn');
+      btn.disabled = true;
+      btn.textContent = '엔진 업데이트 중... (10~20초 소요)';
+      bridge && bridge.updateEngine();
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        ['home', 'library', 'settings'].forEach(t => document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== target));
+        document.querySelectorAll('.nav-btn').forEach(b => {
+          b.classList.toggle('text-pink-600', b.dataset.tab === target);
+          b.classList.toggle('font-bold', b.dataset.tab === target);
+          b.classList.toggle('text-zinc-400', b.dataset.tab !== target);
+        });
+        if (target === 'library') refreshLibrary();
+      });
+    });
+
+    if (!localStorage.getItem('saveone_policy_accepted')) {
+      document.getElementById('disclaimerModal').classList.remove('hidden');
+    }
+    document.getElementById('acceptDisclaimerBtn').addEventListener('click', () => {
+      localStorage.setItem('saveone_policy_accepted', '1');
+      document.getElementById('disclaimerModal').classList.add('hidden');
+    });
+
+    let pendingApkUrl = '';
+    window.onAppUpdateAvailable = (info) => {
+      pendingApkUrl = info.apkUrl || '';
+      document.getElementById('newVersionTitle').textContent = 'v' + (info.versionName || '');
+      document.getElementById('newVersionNotes').textContent = info.notes || '최신 기능이 포함된 업데이트입니다.';
+      document.getElementById('updateProgressWrap').classList.add('hidden');
+      document.getElementById('startAppUpdateBtn').disabled = false;
+      document.getElementById('startAppUpdateBtn').textContent = '지금 바로 업데이트';
+      document.getElementById('appUpdateModal').classList.remove('hidden');
+    };
+    window.onAppUpdateUpToDate = (info) => {
+      alert(`현재 최신 버전(v${info.versionName})을 사용 중입니다.`);
+    };
+    window.onAppUpdateError = (err) => {
+      document.getElementById('startAppUpdateBtn').disabled = false;
+      document.getElementById('startAppUpdateBtn').textContent = '지금 바로 업데이트';
+      alert(err.message || '업데이트 확인 중 오류가 발생했습니다.');
+    };
+    window.onApkDownloadProgress = (p) => {
+      const pct = p.progress || 0;
+      document.getElementById('updateProgressWrap').classList.remove('hidden');
+      document.getElementById('updateProgressBar').style.width = pct + '%';
+      document.getElementById('updateProgressText').textContent = `업데이트 파일 받는 중... ${pct}%`;
+    };
+    window.onApkDownloadReady = () => {
+      document.getElementById('updateProgressText').textContent = '설치 화면을 여는 중...';
+      document.getElementById('appUpdateModal').classList.add('hidden');
+    };
+
+    document.getElementById('closeUpdateModalBtn').addEventListener('click', () => {
+      document.getElementById('appUpdateModal').classList.add('hidden');
+    });
+    document.getElementById('startAppUpdateBtn').addEventListener('click', () => {
+      if (!pendingApkUrl || !bridge) return;
+      document.getElementById('startAppUpdateBtn').disabled = true;
+      document.getElementById('startAppUpdateBtn').textContent = '다운로드 중...';
+      document.getElementById('updateProgressWrap').classList.remove('hidden');
+      bridge.downloadAndInstallApk(pendingApkUrl);
+    });
+    document.getElementById('checkAppUpdateBtn').addEventListener('click', () => {
+      bridge && bridge.checkAppUpdate(true);
+    });
+
+    if (bridge) {
+      syncState(bridge.getState());
+      if (bridge.getAppVersionName) {
+        document.getElementById('appVersionBadge').textContent = 'v' + bridge.getAppVersionName();
+      }
+      if (bridge.checkAppUpdate) {
+        bridge.checkAppUpdate(false);
+      }
+    }
+  </script>
+</body>
+</html>
